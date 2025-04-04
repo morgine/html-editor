@@ -1,5 +1,10 @@
 import { Editor } from '../editor'
-import { ElementObject } from '../object'
+import { ElementObject, type SerializeElementObject } from '../object'
+import { AutoResize, useAutoResize } from '@/packages/html-editor/extentions/auto-resize.ts'
+import { useZoom } from '@/packages/html-editor/extentions/zoom.ts'
+import { useRuler } from '@/packages/html-editor/extentions/ruler.ts'
+import { useDraggable } from '@/packages/html-editor/extentions/draggable.ts'
+import { useGuideline } from '@/packages/html-editor/extentions/guideline.ts'
 
 declare module '../editor' {
   interface Editor {
@@ -8,42 +13,66 @@ declare module '../editor' {
 }
 
 export interface Options {
-  width?: number;
-  height?: number;
-  left?: number;
-  top?: number;
-  background?: string;
+  rulerSize: number
 }
 
 export class Workspace extends ElementObject {
+  autoResize: AutoResize
 
-  constructor(editor: Editor, options?: Options) {
+  constructor(editor: Editor, options?: SerializeElementObject & Options) {
     options = {
+      rulerSize: 16,
+      tag: 'div',
       width: 500,
-      height: 400,
+      height: 500,
       left: 0,
       top: 0,
       background: '#fff',
       ...options,
     }
-    const el = document.createElement('div');
-    el.className = 'workspace';
-    el.style.position = 'absolute';
-    el.style.overflow = 'hidden';
-    super(el)
-    for (const [key, value] of Object.entries(options)) {
-      this.set(key as keyof Options, value)
-    }
-    // this.set('isListenEvent', false)
-    editor.el.prepend(el);
+    const { rulerSize, ...opts } = options
+    super(opts)
+    this.el.className = 'workspace'
+    editor.el.prepend(this.el)
     editor.workspace = this
+    this.autoResize = useAutoResize(editor.el, this, {
+      margin: 0,
+      offsetX: rulerSize,
+      offsetY: rulerSize,
+    })
+    useZoom(editor.el, this, {
+      listenWheel: true,
+    })
+    useRuler(editor.el, this, {
+      size: rulerSize,
+    })
+    useDraggable(editor.el, this, {
+      isTranslate: true, // 是否平移
+      isDetectionParentCollision: false, // 是否检测父元素碰撞
+    })
+    useGuideline(this)
     editor.on('dispose', () => {
       // 清空所有事件
       this.all.clear()
     })
   }
-}
 
-export function useWorkspace(editor: Editor, options?: Options) {
-  return new Workspace(editor, options)
+  serializeHtml(): string {
+    const transform = this.el.style.transform
+    this.el.style.transition = ''
+    const html: string = new XMLSerializer().serializeToString(this.el)
+    this.el.style.transform = transform
+    return html
+  }
+
+  print(): void {
+    const html = this.serializeHtml()
+    const printWindow = window.open('', '_blank', `width=${this.width},height=${this.height}`)
+    if (printWindow) {
+      printWindow.document.write(html)
+      printWindow.document.close()
+      printWindow.print()
+      // printWindow.close()
+    }
+  }
 }

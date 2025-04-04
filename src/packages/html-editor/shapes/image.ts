@@ -1,22 +1,15 @@
 import { ElementObject, type SerializeElementObject } from '@/packages/html-editor/object.ts'
 import { useDraggable } from '@/packages/html-editor/extentions/draggable.ts'
 
-export class Rect extends ElementObject {
-  constructor(options?: SerializeElementObject) {
+export class Image extends ElementObject {
+  constructor(options: SerializeElementObject & {src: string, width: number, height: number}) {
     options = {
-      tag: 'div',
-      width: 100,
-      height: 100,
-      left: 0,
-      top: 0,
-      background: 'transparent',
-      borderWidth: 1,
-      borderColor: '#000',
-      borderStyle: 'solid',
+      objectFit: 'contain',
       ...options,
+      tag: 'img',
     }
     super(options)
-    this.el.className = 'rect'
+    this.el.className = 'img'
     useDraggable(this.el, this, {
       isTranslate: false, // 是否平移
       isDetectionParentCollision: true // 是否检测父元素碰撞

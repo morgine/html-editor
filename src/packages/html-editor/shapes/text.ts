@@ -1,28 +1,26 @@
-import { ElementObject } from '@/packages/html-editor/object.ts'
-
-export interface Options {
-  fontSize?: string;
-  color?: string;
-  left?: number;
-  top?: number;
-}
+import { ElementObject, type SerializeElementObject } from '@/packages/html-editor/object.ts'
+import { useEditable } from '@/packages/html-editor/extentions/editable.ts'
+import { useDraggable } from '@/packages/html-editor/extentions/draggable.ts'
 
 export class Text extends ElementObject {
-  constructor(text: string = 'Text', options?: Options) {
+  constructor(options?: SerializeElementObject) {
     options = {
-      fontSize: '16px',
+      tag: 'div',
+      innerText: 'Text',
+      fontSize: 16,
       color: '#000',
       left: 0,
       top: 0,
       ...options,
     }
-    const el = document.createElement('div')
-    el.style.position = 'absolute'
-    el.contentEditable = 'true'
-    el.innerText = text
-    super(el)
-    for (const [key, value] of Object.entries(options)) {
-      this.set(key as keyof Options, value)
-    }
+    super(options)
+    this.el.className = 'text'
+    this.el.style.width = 'fit-content'
+    this.el.style.height = 'fit-content'
+    useEditable(this)
+    useDraggable(this.el, this, {
+      isTranslate: false, // 是否平移
+      isDetectionParentCollision: true // 是否检测父元素碰撞
+    })
   }
 }

@@ -1,8 +1,8 @@
 import mitt from 'mitt'
-import type { Emitter, EventHandlerMap, EventType, Handler } from 'mitt'
+import type { Emitter, EventHandlerMap, Handler } from 'mitt'
 
 // 泛型基类
-export class TypedEmitter<Events extends Record<EventType, unknown>> {
+export class TypedEmitter<Events extends Record<keyof Events, unknown>> {
   // 内部使用 mitt 实例
   protected emitter: Emitter<Events>;
 
@@ -22,7 +22,8 @@ export class TypedEmitter<Events extends Record<EventType, unknown>> {
     this.emitter.off(type, handler);
   }
 
-  emit<Key extends keyof Events>(type: Key, ...args: Events[Key] extends void ? [] : [event: Events[Key]]): void {
-    this.emitter.emit(type, args[0] as Events[Key]);
+  emit<Key extends keyof Events>(type: Key, args: Events[Key]): void {
+    this.emitter.emit(type, args);
   }
 }
+

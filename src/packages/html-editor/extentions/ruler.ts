@@ -1,10 +1,12 @@
-import { ElementObject } from '../object'
+import { ElementObject, type ElementObjectKey } from '../object'
 
 export interface Options {
   size: number
   bgColor: string
   textColor: string
   eachTickPixels: number
+  xBoxShadow: string
+  yBoxShadow: string
 }
 
 export class Ruler {
@@ -18,6 +20,8 @@ export class Ruler {
     bgColor: '#fff',
     textColor: '#000',
     eachTickPixels: 50,
+    xBoxShadow: '0 2px 2px rgba(0, 0, 0, 0.2)',
+    yBoxShadow: '2px 0 2px rgba(0, 0, 0, 0.2)',
   }
 
   constructor(containerEl: HTMLElement, watch: ElementObject, options?: Partial<Options>) {
@@ -46,6 +50,7 @@ export class Ruler {
       el.style.width = '100%'
       el.style.borderBottom = '0.5px solid #ccc'
       el.style.height = `${this.options.size}px`
+      el.style.boxShadow = this.options.xBoxShadow
     } else {
       el.style.left = '0'
       el.style.top = '0'
@@ -53,13 +58,20 @@ export class Ruler {
       el.style.width = `${this.options.size}px`
       el.style.borderRight = '0.5px solid #ccc'
       el.style.height = '100%'
+      el.style.boxShadow = this.options.yBoxShadow
     }
     return el
   }
 
   private listenEvent() {
-    this.watch.on('fieldChange', (key) => {
-      if (key === 'transform') {
+    const listenKeys = [
+      'scaleX',
+      'scaleY',
+      'translateX',
+      'translateY',
+    ] as ElementObjectKey[]
+    this.watch.on('update:key', (key) => {
+      if (listenKeys.includes(key)) {
         this.render()
       }
     })
@@ -76,15 +88,14 @@ export class Ruler {
   private buildTicks(width: number, height: number): { xTicks: number[]; yTicks: number[] } {
     // 每个刻度的像素
     const eachTickPixels = this.options.eachTickPixels
-    const transform = this.watch.transform
 
     // 刻度取值
     const intervals = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000]
 
-    const scaleX = transform[0]
-    const scaleY = transform[3]
-    const translateX = transform[4]
-    const translateY = transform[5]
+    const scaleX = this.watch.scaleX
+    const scaleY = this.watch.scaleY
+    const translateX = this.watch.translateX
+    const translateY = this.watch.translateY
 
     // 计算刻度间隔
     const intervalX = intervals.find((i) => i * scaleX >= eachTickPixels)
@@ -119,8 +130,8 @@ export class Ruler {
   }
 
   private buildXSVG(width: number, ticks: number[]) {
-    const translateX = this.watch.transform[4]
-    const scaleX = this.watch.transform[0]
+    const translateX = this.watch.translateX
+    const scaleX = this.watch.scaleX
     const size = this.options.size
 
     return `<svg
@@ -157,8 +168,8 @@ export class Ruler {
   }
 
   private buildYSVG(height: number, ticks: number[]) {
-    const translateY = this.watch.transform[5]
-    const scaleY = this.watch.transform[3]
+    const translateY = this.watch.translateY
+    const scaleY = this.watch.scaleY
     const size = this.options.size
 
     return `<svg
@@ -196,6 +207,6 @@ export class Ruler {
   }
 }
 
-export function useRuler(container: HTMLElement, watch: ElementObject, options?: Options) {
+export function useRuler(container: HTMLElement, watch: ElementObject, options?: Partial<Options>) {
   return new Ruler(container, watch, options)
 }

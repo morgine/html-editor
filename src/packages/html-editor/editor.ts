@@ -1,7 +1,7 @@
 import { TypedEmitter } from './event.ts'
 
-export type EditorEvents = {
-  dispose: void
+export interface EditorEvents {
+  dispose: undefined
 }
 
 export class Editor extends TypedEmitter<EditorEvents> {
@@ -13,6 +13,6 @@ export class Editor extends TypedEmitter<EditorEvents> {
   }
 
   dispose(): void {
-    this.emit('dispose')
+    this.emit('dispose', undefined)
   }
 }
