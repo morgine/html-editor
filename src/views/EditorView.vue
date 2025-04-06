@@ -1,55 +1,119 @@
 <script setup lang="ts">
 import { FullScreen, Printer } from '@element-plus/icons-vue'
-import { useTemplateRef, onMounted, ref } from 'vue'
+import { useTemplateRef, onMounted, ref, computed, watch } from 'vue'
 import { Editor } from '@/packages/html-editor/editor.ts'
 import { Workspace } from '@/packages/html-editor/extentions/workspace.ts'
 import { useZoom } from '@/packages/html-editor/extentions/zoom.ts'
 import { Rect } from '@/packages/html-editor/shapes/rect.ts'
 import { Text } from '@/packages/html-editor/shapes/text.ts'
 import { Image } from '@/packages/html-editor/shapes/image.ts'
+import { useControl } from '@/packages/html-editor/extentions/control.ts'
+import { useGuideline } from '@/packages/html-editor/extentions/guideline.ts'
 
 const editorEl = useTemplateRef('editorEl')
 const isGrabbing = ref(false)
+const params = ref({
+  x: 0,
+  y: 0,
+  originX: 0,
+  originY: 0,
+})
 const editor = ref<Editor>()
-const wrokspace = ref<Workspace>()
+const workspace = ref<Workspace>()
+const rect = new Rect({
+  width: 100,
+  height: 100,
+  angle: 10,
+})
+
+const rectRef = ref({
+  x: rect.x,
+  y: rect.y,
+  width: rect.width,
+  height: rect.height,
+})
+
+const workspaceRef = ref({
+  translateX: 0,
+  translateY: 0,
+})
+
+rect.on('update:key', (key) => {
+  switch (key) {
+    case 'x':
+      rectRef.value.x = rect.x
+      break
+    case 'y':
+      rectRef.value.y = rect.y
+      break
+    case 'width':
+      rectRef.value.width = rect.width
+      break
+    case 'height':
+      rectRef.value.height = rect.height
+      break
+  }
+})
+
+const setPositionByOrigin = () => {
+  const {x, y, originX, originY} = params.value
+  rect.setPositionByOrigin(new DOMPoint(x, y), originX, originY)
+}
 onMounted(() => {
-  const e = new Editor(editorEl.value!)
-  wrokspace.value = new Workspace(e)
+  if (!editorEl.value) {
+    throw new Error('editorEl is not defined')
+  }
+  const e = new Editor(editorEl.value)
+  const ws = new Workspace(e)
   editor.value = e
-  const rect = new Rect({
-    width: 100,
-    height: 100,
-  })
+  // rect.updateTransformStyle()
+  useControl(editorEl.value, rect)
+  // useControl(ws.el, rect, {position: 'relative'})
   useZoom(rect.el, rect)
+  useGuideline(ws)
   const text = new Text({writingMode: 'vertical-rl'})
   const text2 = new Text({
     innerText: '竖排文本, Hello World',
-    writingMode: 'vertical-rl'
+    writingMode: 'vertical-rl',
+    // angle: 20
   })
-  const img = new Image({
-    src: 'https://lingfeng-temu3.oss-cn-beijing.aliyuncs.com/resources/DzUhiblq9FMKdLUfps0Md8pmnziFKZOxs7uHyN9zTOJapCWMn1t0kvg0sr0OqubAUs0CnAMn7dQ8ZffZiy8QBgOHr40zY5PVIgfr',
-    width: 100,
-    height: 100,
+  // const img = new Image({
+  //   src: 'https://lingfeng-temu3.oss-cn-beijing.aliyuncs.com/resources/DzUhiblq9FMKdLUfps0Md8pmnziFKZOxs7uHyN9zTOJapCWMn1t0kvg0sr0OqubAUs0CnAMn7dQ8ZffZiy8QBgOHr40zY5PVIgfr',
+  //   width: 100,
+  //   height: 100,
+  // })
+  ws.add(rect)
+  ws.add(text)
+  ws.add(text2)
+  // workspace.value.add(img)
+
+  ws.on('update:key', (key) => {
+    switch (key) {
+      case 'translateX':
+        workspaceRef.value.translateX = ws.translateX
+        break
+      case 'translateY':
+        workspaceRef.value.translateY = ws.translateY
+        break
+    }
   })
-  wrokspace.value.add(rect)
-  wrokspace.value.add(text)
-  wrokspace.value.add(text2)
-  wrokspace.value.add(img)
+
+  workspace.value = ws
 })
 </script>
 
 <template>
   <div
-    class="editor-container w-screen h-screen"
+    class="editor-container w-full h-screen"
     ref="editorEl"
     @keydown.space="isGrabbing=!isGrabbing"
     tabindex="0"
   >
 
-    <div class="tool-box">
+    <div class="tool-box" @click.stop="void 0">
       <div>
         <el-button
-          @click="wrokspace?.autoResize.resize()"
+          @click="workspace?.autoResize.resize()"
           style="padding: 8px"
         >
           <el-icon color="none"><FullScreen /></el-icon>
@@ -57,11 +121,87 @@ onMounted(() => {
       </div>
       <div>
         <el-button
-          @click="wrokspace?.print()"
+          @click="workspace?.print()"
           style="padding: 8px"
         >
           <el-icon color="none"><Printer /></el-icon>
         </el-button>
+      </div>
+      <div>
+        <el-form size="small" label-width="100px" label-position="right">
+          <el-form-item label="x">
+            <el-input-number
+              v-model="params.x"
+              @change="setPositionByOrigin()"
+              style="width: 100px"
+            />
+          </el-form-item>
+          <el-form-item label="y">
+            <el-input-number
+              v-model="params.y"
+              @change="setPositionByOrigin()"
+              style="width: 100px"
+            />
+          </el-form-item>
+          <el-form-item label="originX">
+            <el-input-number
+              v-model="params.originX"
+              @change="setPositionByOrigin()"
+              style="width: 100px"
+            />
+          </el-form-item>
+          <el-form-item label="originY">
+            <el-input-number
+              v-model="params.originY"
+              @change="setPositionByOrigin()"
+              style="width: 100px"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <div>
+        <el-form size="small" label-width="100px" label-position="right">
+          <el-form-item label="x">
+            <el-input-number
+              :model-value="rectRef.x"
+              style="width: 100px"
+            />
+          </el-form-item>
+          <el-form-item label="y">
+            <el-input-number
+              :model-value="rectRef.y"
+              style="width: 100px"
+            />
+          </el-form-item>
+          <el-form-item label="width">
+            <el-input-number
+              :model-value="rectRef.width"
+              style="width: 100px"
+            />
+          </el-form-item>
+          <el-form-item label="height">
+            <el-input-number
+              :model-value="rectRef.height"
+              style="width: 100px"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <div>
+        <el-form size="small" label-width="100px" label-position="right">
+          <el-form-item label="translateX">
+            <el-input-number
+              :model-value="workspaceRef.translateX"
+              style="width: 100px"
+            />
+          </el-form-item>
+          <el-form-item label="translateY">
+            <el-input-number
+              :model-value="workspaceRef.translateY"
+              style="width: 100px"
+            />
+          </el-form-item>
+        </el-form>
       </div>
     </div>
   </div>

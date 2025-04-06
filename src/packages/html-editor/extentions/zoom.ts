@@ -57,7 +57,6 @@ export class Zoom {
       const obj = this.zoomObject
       obj.set('scaleX', newScale)
       obj.set('scaleY', newScale)
-      obj.updateTransformStyle()
     });
   }
 
@@ -84,7 +83,6 @@ export class Zoom {
     obj.set('scaleY', newScale)
     obj.set('translateX', newTranslateX);
     obj.set('translateY', newTranslateY);
-    obj.updateTransformStyle()
   }
 }
 

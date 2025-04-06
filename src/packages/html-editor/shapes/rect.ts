@@ -7,8 +7,6 @@ export class Rect extends ElementObject {
       tag: 'div',
       width: 100,
       height: 100,
-      left: 0,
-      top: 0,
       background: 'transparent',
       borderWidth: 1,
       borderColor: '#000',

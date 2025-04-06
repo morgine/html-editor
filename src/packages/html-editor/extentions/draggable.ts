@@ -2,9 +2,13 @@ import type { ElementObject } from '@/packages/html-editor/object.ts'
 import Hammer from 'hammerjs'
 
 declare module '../object' {
+  interface ElementObject {
+    offset?: DOMPoint
+  }
   interface ElementObjectEvents {
     'object:moving': ElementObject
     'object:moveStart': ElementObject
+    'object:moveEnd': ElementObject
   }
 }
 
@@ -62,11 +66,14 @@ export function useDraggable(dragEl: HTMLElement, obj: ElementObject, options?: 
   let startTranslateY = 0
   hammer.on('panstart', (e) => {
     if (isEditing || !isTouching) return
-    startX = obj.left
-    startY = obj.top
+    startX = obj.x
+    startY = obj.y
     startTranslateX = obj.translateX
     startTranslateY = obj.translateY
-    obj.emit('object:moveStart', obj)
+    if (!options.isTranslate) {
+      obj.offset = new DOMPoint(e.deltaX, e.deltaY)
+      obj.emit('object:moveStart', obj, true)
+    }
   })
   hammer.on('panmove', (e) => {
     if (isEditing || !isTouching) return
@@ -75,34 +82,41 @@ export function useDraggable(dragEl: HTMLElement, obj: ElementObject, options?: 
 
     // 方式1：使用 transform
     if (options.isTranslate) {
-      obj.set('translateX', startTranslateX + dx)
-      obj.set('translateY', startTranslateY + dy)
-      obj.updateTransformStyle()
+      obj.setRecords({
+        translateX: startTranslateX + dx,
+        translateY: startTranslateY + dy,
+      })
     } else {
+      obj.offset!.x = e.deltaX
+      obj.offset!.y = e.deltaY
       let left = startX + dx
       let top = startY + dy
-      //       // 父元素碰撞检测
-      if (options.isDetectionParentCollision) {
-        const parent = dragEl.parentElement
-        if (parent) {
-          // 水平边界检测
-          const parentWidth = parent.offsetWidth
-          const parentHeight = parent.offsetHeight
-          const elementWidth = dragEl.offsetWidth
-          const elementHeight = dragEl.offsetHeight
-          const maxLeft = parentWidth - (elementWidth * obj.scaleX)
-          left = Math.min(left, maxLeft)
-          left = Math.max(left, 0)
-          // 垂直边界检测
-          const maxTop =parentHeight - (elementHeight * obj.scaleY)
-          top = Math.min(top, maxTop)
-          top = Math.max(top, 0)
-        }
+      // 父元素碰撞检测
+      if (options.isDetectionParentCollision && obj.parent) {
+
+        const relativeBounds = obj.getRelativeBounds()
+        const minX = obj.x - relativeBounds.x
+        const minY = obj.y - relativeBounds.y
+        const maxX = obj.parent.width - relativeBounds.width + minX
+        const maxY = obj.parent.height - relativeBounds.height + minY
+
+        // 水平边界检测
+        left = Math.min(left, maxX)
+        left = Math.max(left, minX)
+        // 垂直边界检测
+        top = Math.min(top, maxY)
+        top = Math.max(top, minY)
       }
 
-      obj.set('left', left)
-      obj.set('top', top)
+      obj.set('x', left)
+      obj.set('y', top)
       obj.emit('object:moving', obj, true)
+    }
+  })
+  hammer.on('panend', (e) => {
+    if (isEditing || !isTouching) return
+    if (!options.isTranslate) {
+      obj.emit('object:moveEnd', obj, true)
     }
   })
 }

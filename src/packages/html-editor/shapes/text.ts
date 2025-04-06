@@ -9,8 +9,8 @@ export class Text extends ElementObject {
       innerText: 'Text',
       fontSize: 16,
       color: '#000',
-      left: 0,
-      top: 0,
+      x: 0,
+      y: 0,
       ...options,
     }
     super(options)
@@ -22,5 +22,16 @@ export class Text extends ElementObject {
       isTranslate: false, // 是否平移
       isDetectionParentCollision: true // 是否检测父元素碰撞
     })
+
+    // 监听元素大小变化, 重新计算宽高
+    const resizeObserver = new ResizeObserver(() => {
+      this.calcWidthHeight()
+    })
+    resizeObserver.observe(this.el)
+  }
+
+  calcWidthHeight() {
+    this.width = this.el.offsetWidth
+    this.height = this.el.offsetHeight
   }
 }

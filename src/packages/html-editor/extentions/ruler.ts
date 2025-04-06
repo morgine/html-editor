@@ -43,6 +43,7 @@ export class Ruler {
     const el = document.createElement('div')
     el.className = `ruler-${type}`
     el.style.position = 'absolute'
+    el.style.zIndex = '9999'
     if (type === 'x') {
       el.style.left = '0'
       el.style.top = '0'
@@ -64,15 +65,21 @@ export class Ruler {
   }
 
   private listenEvent() {
-    const listenKeys = [
+    const listenKeys: Set<ElementObjectKey> = new Set([
       'scaleX',
       'scaleY',
       'translateX',
       'translateY',
-    ] as ElementObjectKey[]
+    ])
     this.watch.on('update:key', (key) => {
-      if (listenKeys.includes(key)) {
-        this.render()
+      if (Array.isArray(key)) {
+        if (key.some(k => listenKeys.has(k))) {
+          this.render()
+        }
+      } else {
+        if (listenKeys.has(key)) {
+          this.render()
+        }
       }
     })
   }

@@ -1,17 +1,64 @@
-import type { TMatrix2D, Point } from './types'
+import type { Coords } from '@/packages/html-editor/types'
 
-export const transformPoint = (p: Point, t: TMatrix2D, ignoreOffset = false): Point => {
+/**
+ * 根据变换矩阵和包围盒顶点坐标计算变换后的包围盒顶点坐标
+ * @param matrix 变换矩阵
+ * @param coords 包围盒顶点坐标
+ */
+export function transformCoords(matrix: DOMMatrix, coords: Coords): Coords {
   return {
-    x: t[0] * p.x + t[2] * p.y + (ignoreOffset ? 0 : t[4]),
-    y: t[1] * p.x + t[3] * p.y + (ignoreOffset ? 0 : t[5]),
-  };
+    tl: matrix.transformPoint(coords.tl),
+    tr: matrix.transformPoint(coords.tr),
+    bl: matrix.transformPoint(coords.bl),
+    br: matrix.transformPoint(coords.br),
+    cn: matrix.transformPoint(coords.cn),
+  }
 }
 
-export const invertTransform = (t: TMatrix2D): TMatrix2D => {
-  const a = 1 / (t[0] * t[3] - t[1] * t[2]),
-    r = [a * t[3], -a * t[1], -a * t[2], a * t[0], 0, 0] as TMatrix2D,
-    { x, y } = transformPoint({x: t[4], y: t[5]}, t, true);
-  r[4] = -x;
-  r[5] = -y;
-  return r;
-};
+/**
+ * 给定点坐标添加偏移量
+ * @param p 点坐标
+ * @param offset 偏移量
+ */
+export function addPointOffset(p: DOMPoint, offset: DOMPoint): DOMPoint {
+  const np = new DOMPoint(p.x, p.y);
+  np.x += offset.x;
+  np.y  += offset.y;
+  return np
+}
+
+/**
+ * 给定包围盒顶点坐标添加偏移量
+ * @param c 包围盒顶点坐标
+ * @param offset 偏移量
+ */
+export function addCoordsOffset(c: Coords, offset: DOMPoint): Coords {
+  return {
+    tl: addPointOffset(c.tl, offset),
+    tr: addPointOffset(c.tr, offset),
+    bl: addPointOffset(c.bl, offset),
+    br: addPointOffset(c.br, offset),
+    cn: addPointOffset(c.cn, offset),
+  }
+}
+
+/**
+ * 计算两点之间的距离
+ * @param p1 点1
+ * @param p2 点2
+ */
+export function calcDistance(p1: DOMPoint, p2: DOMPoint): number {
+  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
+}
+
+/**
+ * 根据包围盒顶点坐标计算矩形包围盒
+ * @param c 包围盒顶点坐标
+ */
+export function getCoordBounds(c: Coords): DOMRect {
+  const minX = Math.min(c.tl.x, c.tr.x, c.bl.x, c.br.x)
+  const minY = Math.min(c.tl.y, c.tr.y, c.bl.y, c.br.y)
+  const maxX = Math.max(c.tl.x, c.tr.x, c.bl.x, c.br.x)
+  const maxY = Math.max(c.tl.y, c.tr.y, c.bl.y, c.br.y)
+  return new DOMRect(minX, minY, maxX - minX, maxY - minY)
+}
