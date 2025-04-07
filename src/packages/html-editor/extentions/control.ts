@@ -1,4 +1,4 @@
-import { ElementObject, type ElementObjectKey } from '@/packages/html-editor/object'
+import { ElementObject } from '@/packages/html-editor/object'
 
 export interface Options {
   width: number
@@ -83,20 +83,15 @@ export class Control {
   }
 
   private setupEventListeners() {
-    const listenKeys: Set<ElementObjectKey> = new Set([
-      'x',
-      'y',
-      ...ElementObject.transformKeys.values()
-    ])
 
-    this.obj.on('update:key', (key) => {
-      if (Array.isArray(key)) {
-        if (key.some((k) => listenKeys.has(k))) {
-          this.updateControl()
-        }
-      } else if (listenKeys.has(key)) {
-        this.updateControl()
-      }
+    this.obj.on('applying:transform', (event, origin) => {
+      if (origin === 'children') return
+      this.updateControl()
+    })
+
+    this.obj.on('applying:position', (event, origin) => {
+      if (origin !== 'self') return
+      this.updateControl()
     })
   }
 
@@ -123,11 +118,6 @@ export class Control {
     this.l.setAttribute('y1', c.tl.y.toString())
     this.l.setAttribute('x2', c.bl.x.toString())
     this.l.setAttribute('y2', c.bl.y.toString())
-  }
-
-  destroy() {
-    this.resizeObserver.disconnect()
-    this.svg.remove()
   }
 }
 

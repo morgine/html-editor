@@ -1,13 +1,19 @@
 import { describe, expect, test, beforeEach } from 'vitest';
 import { Geometry } from './geometry'; // 根据实际路径调整
 
+interface MockEvents {
+ key: string;
+}
+
+class MockObject extends Geometry<MockEvents> {}
+
 describe('Geometry', () => {
-  let geometry: Geometry;
-  let parentGeometry: Geometry;
+  let geometry: MockObject;
+  let parentGeometry: MockObject;
 
   beforeEach(() => {
     // 初始化基本Geometry实例
-    geometry = new Geometry();
+    geometry = new MockObject();
     geometry.width = 100;
     geometry.height = 50;
 
@@ -15,7 +21,7 @@ describe('Geometry', () => {
     parentGeometry = new Geometry();
     parentGeometry.width = 100;
     parentGeometry.height = 50;
-    geometry.parent = () => parentGeometry;
+    geometry.parent = parentGeometry;
   });
 
   describe('calcOCoords', () => {
@@ -69,7 +75,6 @@ describe('Geometry', () => {
     test('should include parent transformations', () => {
       parentGeometry.x = 50;
       parentGeometry.scaleX = 2;
-      geometry.parent = () => parentGeometry;
       geometry.x = 10;
 
       const aCoords = geometry.calcACoords();
@@ -95,7 +100,6 @@ describe('Geometry', () => {
     test('should include parent scale in bounds', () => {
       parentGeometry.scaleX = 2;
       parentGeometry.scaleY = 2;
-      geometry.parent = () => parentGeometry;
       geometry.width = 50;
       geometry.height = 25;
 
@@ -107,7 +111,6 @@ describe('Geometry', () => {
     test('should handle complex transformations', () => {
       parentGeometry.x = 100;
       parentGeometry.rotate = 90;
-      geometry.parent = () => parentGeometry;
       geometry.x = 50;
       geometry.rotate = 45;
 
@@ -225,18 +228,15 @@ describe('Geometry', () => {
 
     // 测试父元素变换的影响
     test('should consider parent transformations', () => {
-      const parent = new Geometry()
-      parent.x = 100
-      parent.y = 100
+      parentGeometry.x = 100
+      parentGeometry.y = 100
 
-      const child = new Geometry()
-      child.x = 50
-      child.y = 50
-      child.parent = () => parent
+      geometry.x = 50
+      geometry.y = 50
 
       // 绝对坐标点位于子元素原点
       const absPoint = new DOMPoint(150, 150)
-      const result = child.getRelativePositionByOrigin(absPoint, 0, 0)
+      const result = geometry.getRelativePositionByOrigin(absPoint, 0, 0)
 
       // 预期结果：相对坐标应为子元素原点 (50,50) 减去父位置后的 (0,0)
       expect(result.x).toBeCloseTo(50)

@@ -1,8 +1,11 @@
 import { ElementObject } from '../object'
 
 declare module '../object' {
-  interface ElementObjectEvents {
-    'object:editing': boolean
+  interface ElementEvents {
+    'object:editing': {
+      target: ElementObject
+      editing: boolean
+    }
   }
 }
 
@@ -16,13 +19,19 @@ export function useEditable(obj: ElementObject) {
     obj.el.style.cursor = 'text'
     obj.el.setAttribute('contenteditable', 'true')
     obj.el.focus()
-    obj.emit('object:editing', isEditing)
+    obj.emit('object:editing', {
+      target: obj,
+      editing: isEditing,
+    })
 
     const onBlur = () => {
       isEditing = false
       obj.el.removeAttribute('contenteditable')
       obj.el.style.cursor = ''
-      obj.emit('object:editing', isEditing)
+      obj.emit('object:editing', {
+        target: obj,
+        editing: isEditing,
+      })
     }
     obj.el.addEventListener('blur', onBlur, { once: true })
   }

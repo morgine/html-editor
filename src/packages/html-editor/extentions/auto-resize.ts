@@ -1,14 +1,6 @@
 import type { ElementObject } from '../object'
 import { animate } from '@/packages/html-editor/animation.ts'
 
-declare module '../object' {
-  interface ElementObjectEvents {
-    'object:moving': ElementObject
-    'object:moveStart': ElementObject
-    'object:moveEnd': ElementObject
-  }
-}
-
 export interface Options {
   margin: number
   offsetX: number

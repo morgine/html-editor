@@ -4,7 +4,6 @@ import { AutoResize, useAutoResize } from '@/packages/html-editor/extentions/aut
 import { useZoom } from '@/packages/html-editor/extentions/zoom.ts'
 import { useRuler } from '@/packages/html-editor/extentions/ruler.ts'
 import { useDraggable } from '@/packages/html-editor/extentions/draggable.ts'
-import { useGuideline } from '@/packages/html-editor/extentions/guideline.ts'
 import { useControl } from '@/packages/html-editor/extentions/control.ts'
 
 declare module '../editor' {
@@ -50,11 +49,6 @@ export class Workspace extends ElementObject {
       isDetectionParentCollision: false, // 是否检测父元素碰撞
     })
     useControl(editor.el, this)
-    // useGuideline(this)
-    editor.on('dispose', () => {
-      // 清空所有事件
-      this.all.clear()
-    })
   }
 
   serializeHtml(): string {

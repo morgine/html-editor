@@ -2,13 +2,20 @@ import type { ElementObject } from '@/packages/html-editor/object.ts'
 import Hammer from 'hammerjs'
 
 declare module '../object' {
-  interface ElementObject {
-    offset?: DOMPoint
-  }
-  interface ElementObjectEvents {
-    'object:moving': ElementObject
-    'object:moveStart': ElementObject
-    'object:moveEnd': ElementObject
+  interface ElementEvents {
+    'object:moving': {
+      target: ElementObject
+      x: number
+      y: number
+      offsetX: number
+      offsetY: number
+    }
+    'object:moveStart': {
+      target: ElementObject
+    }
+    'object:moveEnd': {
+      target: ElementObject
+    }
   }
 }
 
@@ -26,7 +33,7 @@ export function useDraggable(dragEl: HTMLElement, obj: ElementObject, options?: 
   dragEl.style.cursor = options.isTranslate ? 'grab' : 'move'
   let isEditing = false
   let isTouching = false
-  obj.on('object:editing', (editing) => {
+  obj.on('object:editing', ({editing}) => {
     isEditing = editing
   })
 
@@ -71,8 +78,9 @@ export function useDraggable(dragEl: HTMLElement, obj: ElementObject, options?: 
     startTranslateX = obj.translateX
     startTranslateY = obj.translateY
     if (!options.isTranslate) {
-      obj.offset = new DOMPoint(e.deltaX, e.deltaY)
-      obj.emit('object:moveStart', obj, true)
+      obj.emit('object:moveStart', {
+        target: obj,
+      })
     }
   })
   hammer.on('panmove', (e) => {
@@ -87,8 +95,6 @@ export function useDraggable(dragEl: HTMLElement, obj: ElementObject, options?: 
         translateY: startTranslateY + dy,
       })
     } else {
-      obj.offset!.x = e.deltaX
-      obj.offset!.y = e.deltaY
       let left = startX + dx
       let top = startY + dy
       // 父元素碰撞检测
@@ -108,15 +114,25 @@ export function useDraggable(dragEl: HTMLElement, obj: ElementObject, options?: 
         top = Math.max(top, minY)
       }
 
-      obj.set('x', left)
-      obj.set('y', top)
-      obj.emit('object:moving', obj, true)
+      obj.setRecords({
+        x: left,
+        y: top,
+      })
+      obj.emit('object:moving', {
+        target: obj,
+        x: left,
+        y: top,
+        offsetX: e.deltaX,
+        offsetY: e.deltaY,
+      })
     }
   })
   hammer.on('panend', (e) => {
     if (isEditing || !isTouching) return
     if (!options.isTranslate) {
-      obj.emit('object:moveEnd', obj, true)
+      obj.emit('object:moveEnd', {
+        target: obj,
+      })
     }
   })
 }

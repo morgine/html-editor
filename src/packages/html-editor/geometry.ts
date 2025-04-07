@@ -1,8 +1,9 @@
 import type { Coords } from './types'
 import { getCoordBounds, transformCoords } from './matrix'
+import { TypedEmitter } from '@/packages/html-editor/event.ts'
 
-export class Geometry {
-  parent: () => Geometry | undefined = () => undefined;
+export class Geometry<Events extends Record<keyof Events, unknown>> extends TypedEmitter<Events> {
+  declare parent?: Geometry<Events>
   x: number = 0
   y: number = 0
   width: number = 0
@@ -23,11 +24,11 @@ export class Geometry {
   getSelfMatrix(): DOMMatrix {
     const m = new DOMMatrix()
     // 应用变换
+    m.translateSelf(this.translateX, this.translateY)
     m.rotateSelf(this.rotate)
     m.skewYSelf(this.skewY)
     m.skewXSelf(this.skewX)
     m.scaleSelf(this.scaleX, this.scaleY)
-    m.translateSelf(this.translateX, this.translateY)
     return m
   }
 
@@ -75,7 +76,7 @@ export class Geometry {
       const positionMatrix = new DOMMatrix().translateSelf(this.x, this.y)
       matrix = positionMatrix.multiply(matrix)
     }
-    const parent = this.parent()
+    const parent = this.parent
     if (parent) {
       // 父级绝对矩阵乘当前矩阵
       return parent.getAbsMatrix(true).multiply(matrix)

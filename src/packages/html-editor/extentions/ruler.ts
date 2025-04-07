@@ -65,22 +65,8 @@ export class Ruler {
   }
 
   private listenEvent() {
-    const listenKeys: Set<ElementObjectKey> = new Set([
-      'scaleX',
-      'scaleY',
-      'translateX',
-      'translateY',
-    ])
-    this.watch.on('update:key', (key) => {
-      if (Array.isArray(key)) {
-        if (key.some(k => listenKeys.has(k))) {
-          this.render()
-        }
-      } else {
-        if (listenKeys.has(key)) {
-          this.render()
-        }
-      }
+    this.watch.on('applying:transform', () => {
+        this.render()
     })
   }
 

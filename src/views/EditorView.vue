@@ -23,7 +23,7 @@ const workspace = ref<Workspace>()
 const rect = new Rect({
   width: 100,
   height: 100,
-  angle: 10,
+  rotate: 10,
 })
 
 const rectRef = ref({
@@ -38,21 +38,11 @@ const workspaceRef = ref({
   translateY: 0,
 })
 
-rect.on('update:key', (key) => {
-  switch (key) {
-    case 'x':
-      rectRef.value.x = rect.x
-      break
-    case 'y':
-      rectRef.value.y = rect.y
-      break
-    case 'width':
-      rectRef.value.width = rect.width
-      break
-    case 'height':
-      rectRef.value.height = rect.height
-      break
-  }
+rect.on('applying:transform', () => {
+    rectRef.value.x = rect.x
+    rectRef.value.y = rect.y
+    rectRef.value.width = rect.width
+    rectRef.value.height = rect.height
 })
 
 const setPositionByOrigin = () => {
@@ -87,15 +77,9 @@ onMounted(() => {
   ws.add(text2)
   // workspace.value.add(img)
 
-  ws.on('update:key', (key) => {
-    switch (key) {
-      case 'translateX':
-        workspaceRef.value.translateX = ws.translateX
-        break
-      case 'translateY':
-        workspaceRef.value.translateY = ws.translateY
-        break
-    }
+  ws.on('applying:transform', () => {
+      workspaceRef.value.translateX = ws.translateX
+      workspaceRef.value.translateY = ws.translateY
   })
 
   workspace.value = ws

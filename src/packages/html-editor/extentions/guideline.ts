@@ -1,7 +1,5 @@
-import type { ElementObject } from '@/packages/html-editor/object'
 import type { Coords } from '@/packages/html-editor/types'
 import type { Workspace } from '@/packages/html-editor/extentions/workspace'
-import { addCoordsOffset } from '@/packages/html-editor/matrix.ts'
 
 const coordsKeys: (keyof Coords)[] = ['tl', 'tr', 'bl', 'br', 'cn']
 
@@ -40,7 +38,7 @@ export class Guideline {
 
   private listenEvents() {
     const aCoordsItems: Coords[] = []
-    this.ws.on('object:moveStart', (node: ElementObject) => {
+    this.ws.on('object:moveStart', ({ target }) => {
       aCoordsItems.length = 0
       // for (const child of this.ws.children) {
       //   if (child !== node) {
@@ -50,7 +48,7 @@ export class Guideline {
       // }
       aCoordsItems.push(this.ws.calcACoords())
     })
-    this.ws.on('object:moving', (node: ElementObject) => {
+    this.ws.on('object:moving', ({target: node}) => {
       this.clearGuidelines()
       const aCoords = node.calcACoords()
 
@@ -84,7 +82,7 @@ export class Guideline {
         this.hideHorizontalLine()
       }
     })
-    this.ws.on('object:moveEnd', (node: ElementObject) => {
+    this.ws.on('object:moveEnd', () => {
       this.hideVerticalLine()
       this.hideHorizontalLine()
     })

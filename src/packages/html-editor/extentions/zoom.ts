@@ -55,8 +55,10 @@ export class Zoom {
       newScale = Math.min(newScale, this.options.maxScale);
       newScale = Math.max(newScale, this.options.minScale);
       const obj = this.zoomObject
-      obj.set('scaleX', newScale)
-      obj.set('scaleY', newScale)
+      obj.setRecords({
+        scaleX: newScale,
+        scaleY: newScale,
+      })
     });
   }
 
@@ -79,10 +81,12 @@ export class Zoom {
     // 计算新的平移值以保持鼠标位置不变
     const newTranslateX = mouseX - (mouseX - obj.translateX) * (newScale / obj.scaleX);
     const newTranslateY = mouseY - (mouseY - obj.translateY) * (newScale / obj.scaleY);
-    obj.set('scaleX', newScale)
-    obj.set('scaleY', newScale)
-    obj.set('translateX', newTranslateX);
-    obj.set('translateY', newTranslateY);
+    obj.setRecords({
+      scaleX: newScale,
+      scaleY: newScale,
+      translateX: newTranslateX,
+      translateY: newTranslateY,
+    })
   }
 }
 
