@@ -38,7 +38,7 @@ export class Guideline {
 
   private listenEvents() {
     const aCoordsItems: Coords[] = []
-    this.ws.on('object:moveStart', ({ target }) => {
+    this.ws.on('object:moveStart', () => {
       aCoordsItems.length = 0
       // for (const child of this.ws.children) {
       //   if (child !== node) {

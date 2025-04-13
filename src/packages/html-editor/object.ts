@@ -1,5 +1,4 @@
 import { Geometry } from './geometry'
-import { getCoordBounds } from '@/packages/html-editor/matrix.ts'
 
 export interface ElementEvents {
   'applying:transform': {
@@ -44,8 +43,6 @@ export interface ElementEvents {
     target: ElementObject
     data: BoxAttributes
   }
-
-  [key: string]: unknown
 }
 
 export interface GeometryAttributes {
@@ -104,11 +101,6 @@ export interface ElementObjectAttributes extends GeometryAttributes,
   ImageAttributes,
   BoxAttributes {}
 
-export type GeometryKey = keyof GeometryAttributes
-export type BorderKey = keyof BorderAttributes
-export type TextKey = keyof TextAttributes
-export type ImageKey = keyof ImageAttributes
-export type BoxKey = keyof BoxAttributes
 export type ElementObjectKey = keyof ElementObjectAttributes
 
 export interface SerializeElementObject extends Partial<GeometryAttributes>,
@@ -197,20 +189,35 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
     obj.parent = this
     this.children.push(obj)
     // 监听子元素的事件, 并转发给父元素
-    obj.onAll((key, event, origin) => {
+    obj.onEach((key, event, origin) => {
       if (origin === 'self' || origin === 'children') {
         this.emit(key, event, 'children')
       }
     })
 
+    // obj.on('applying:transform', (event, origin) => {
+    //   event.target
+    // })
+
     // 监听父元素的事件, 并转发给子元素
-    this.onAll((key, event, origin) => {
+    this.onEach((key, event, origin) => {
       if (origin === 'self' || origin === 'parent') {
         for (const child of this.children) {
           child.emit(key, event, 'parent')
         }
       }
     })
+  }
+
+  remove(obj: ElementObject) {
+    const index = this.children.indexOf(obj)
+    if (index !== -1) {
+      this.el.removeChild(obj.el)
+      obj.parent = undefined
+      this.children.splice(index, 1)
+      // 取消监听子元素的事件
+      obj.clear()
+    }
   }
 
   /**
@@ -419,17 +426,5 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
       x: relativePoint.x,
       y: relativePoint.y,
     })
-  }
-
-  // 获取相对包围盒
-  getRelativeBounds(margin: number = 0): DOMRect {
-    const coords = this.calcOCoords(margin)
-    return getCoordBounds(coords)
-  }
-
-  // 获取绝对包围盒
-  getAbsoluteBounds(margin: number = 0): DOMRect {
-    const coords = this.calcACoords(margin)
-    return getCoordBounds(coords)
   }
 }

@@ -1,7 +1,7 @@
 import { ElementObject, type SerializeElementObject } from '@/packages/html-editor/object.ts'
 
 
-export class Rect extends ElementObject {
+export class Group extends ElementObject {
   constructor(options?: SerializeElementObject) {
     options = {
       tag: 'div',

@@ -62,3 +62,11 @@ export function getCoordBounds(c: Coords): DOMRect {
   const maxY = Math.max(c.tl.y, c.tr.y, c.bl.y, c.br.y)
   return new DOMRect(minX, minY, maxX - minX, maxY - minY)
 }
+
+export function getMultiplyCoordsBounds(cs: Coords[]): DOMRect {
+  const minX = Math.min(...cs.map(c => Math.min(c.tl.x, c.tr.x, c.bl.x, c.br.x)))
+  const minY = Math.min(...cs.map(c => Math.min(c.tl.y, c.tr.y, c.bl.y, c.br.y)))
+  const maxX = Math.max(...cs.map(c => Math.max(c.tl.x, c.tr.x, c.bl.x, c.br.x)))
+  const maxY = Math.max(...cs.map(c => Math.max(c.tl.y, c.tr.y, c.bl.y, c.br.y)))
+  return new DOMRect(minX, minY, maxX - minX, maxY - minY)
+}

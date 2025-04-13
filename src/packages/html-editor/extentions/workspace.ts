@@ -1,14 +1,16 @@
-import { Editor } from '../editor'
 import { ElementObject, type SerializeElementObject } from '../object'
 import { AutoResize, useAutoResize } from '@/packages/html-editor/extentions/auto-resize.ts'
 import { useZoom } from '@/packages/html-editor/extentions/zoom.ts'
 import { useRuler } from '@/packages/html-editor/extentions/ruler.ts'
 import { useDraggable } from '@/packages/html-editor/extentions/draggable.ts'
 import { useControl } from '@/packages/html-editor/extentions/control.ts'
+import { Grab } from '@/packages/html-editor/extentions/grab.ts'
 
-declare module '../editor' {
-  interface Editor {
-    workspace: Workspace
+declare module '../object' {
+  interface ElementEvents {
+    'object:active': {
+      target: ElementObject
+    }
   }
 }
 
@@ -18,8 +20,10 @@ export interface Options {
 
 export class Workspace extends ElementObject {
   autoResize: AutoResize
+  grab: Grab
+  active?: ElementObject
 
-  constructor(editor: Editor, options?: SerializeElementObject & Options) {
+  constructor(editorEl: HTMLElement, options?: SerializeElementObject & Options) {
     options = {
       rulerSize: 16,
       tag: 'div',
@@ -31,24 +35,23 @@ export class Workspace extends ElementObject {
     const { rulerSize, ...opts } = options
     super(opts)
     this.el.className = 'workspace'
-    editor.el.prepend(this.el)
-    editor.workspace = this
-    this.autoResize = useAutoResize(editor.el, this, {
+    editorEl.prepend(this.el)
+    this.autoResize = useAutoResize(editorEl, this, {
       margin: 0,
       offsetX: rulerSize,
       offsetY: rulerSize,
     })
-    useZoom(editor.el, this, {
+    useZoom(editorEl, this, {
       listenWheel: true,
     })
-    useRuler(editor.el, this, {
+    useRuler(editorEl, this, {
       size: rulerSize,
     })
-    useDraggable(editor.el, this, {
-      isTranslate: true, // 是否平移
-      isDetectionParentCollision: false, // 是否检测父元素碰撞
-    })
-    useControl(editor.el, this)
+    // useDraggable(editorEl, this, {
+    //   isDetectionParentCollision: false, // 是否检测父元素碰撞
+    // })
+    useControl(editorEl, this)
+    this.grab = new Grab(editorEl, this)
   }
 
   serializeHtml(): string {
@@ -68,5 +71,26 @@ export class Workspace extends ElementObject {
       printWindow.print()
       // printWindow.close()
     }
+  }
+
+  add(obj: ElementObject): void {
+    super.add(obj)
+    useDraggable(obj, {
+      isDetectionParentCollision: true, // 是否检测父元素碰撞
+    })
+    this.listenClickEvent(obj)
+  }
+
+  listenClickEvent(obj: ElementObject) {
+    obj.el.addEventListener('click', (e) => {
+      if (this.active === obj) {
+        this.active = undefined
+        return
+      }
+      this.active = obj
+      obj.emit('object:active', {
+        target: obj,
+      })
+    })
   }
 }

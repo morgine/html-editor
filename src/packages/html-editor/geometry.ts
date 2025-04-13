@@ -1,8 +1,9 @@
 import type { Coords } from './types'
 import { getCoordBounds, transformCoords } from './matrix'
-import { TypedEmitter } from '@/packages/html-editor/event.ts'
+import { EventEmitter } from '@/packages/html-editor/mitter.ts'
 
-export class Geometry<Events extends Record<keyof Events, unknown>> extends TypedEmitter<Events> {
+
+export class Geometry<Events extends Record<keyof Events, unknown>> extends EventEmitter<Events> {
   declare parent?: Geometry<Events>
   x: number = 0
   y: number = 0
@@ -130,6 +131,15 @@ export class Geometry<Events extends Record<keyof Events, unknown>> extends Type
     return m.transformPoint(point)
   }
 
+  getRelativePosition(absPoint: DOMPoint): DOMPoint {
+    // if (!this.parent) {
+    //   return absPoint
+    // }
+    const absMatrix = this.getAbsMatrix(false)
+    const inverseMatrix = absMatrix.inverse()
+    return inverseMatrix.transformPoint(absPoint)
+  }
+
   /**
    * 根据绝对坐标点和原点坐标计算相对坐标
    * @param absPoint 绝对坐标
@@ -138,9 +148,19 @@ export class Geometry<Events extends Record<keyof Events, unknown>> extends Type
    * @return point 相对坐标
    */
   getRelativePositionByOrigin(absPoint: DOMPoint, originX: number, originY: number): DOMPoint {
-    const absMatrix = this.getAbsMatrix(false)
-    const inverseMatrix = absMatrix.inverse()
-    const relativePoint = inverseMatrix.transformPoint(absPoint)
+    const relativePoint = this.getRelativePosition(absPoint)
     return this.translateToGivenOrigin(relativePoint, originX, originY, this.originX, this.originY)
+  }
+
+  // 获取相对包围盒
+  getRelativeBounds(margin: number = 0): DOMRect {
+    const coords = this.calcOCoords(margin)
+    return getCoordBounds(coords)
+  }
+
+  // 获取绝对包围盒
+  getAbsoluteBounds(margin: number = 0): DOMRect {
+    const coords = this.calcACoords(margin)
+    return getCoordBounds(coords)
   }
 }
