@@ -9,7 +9,7 @@ import { Grab } from '@/packages/html-editor/extentions/grab.ts'
 declare module '../object' {
   interface ElementEvents {
     'object:active': {
-      target: ElementObject
+      target: ElementObject | undefined
     }
   }
 }
@@ -82,15 +82,27 @@ export class Workspace extends ElementObject {
   }
 
   listenClickEvent(obj: ElementObject) {
-    obj.el.addEventListener('click', (e) => {
-      if (this.active === obj) {
-        this.active = undefined
+    let isMoving = false
+    obj.on('object:moving', () => {
+      isMoving = true
+    })
+    obj.el.addEventListener('mouseup', (e) => {
+      if (isMoving) {
+        isMoving = false
         return
       }
-      this.active = obj
-      obj.emit('object:active', {
-        target: obj,
+      const activeElement: ElementObject | undefined = this.active === obj ? undefined : obj
+      this.active = activeElement
+      this.emit('object:active', {
+        target: activeElement,
       })
+    })
+  }
+
+  setActive(obj: ElementObject | undefined) {
+    this.active = obj
+    this.emit('object:active', {
+      target: obj,
     })
   }
 }

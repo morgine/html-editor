@@ -109,6 +109,7 @@ export interface SerializeElementObject extends Partial<GeometryAttributes>,
   Partial<ImageAttributes>,
   Partial<BoxAttributes> {
   tag?: string
+  shape?: string
   children?: SerializeElementObject[]
 }
 
@@ -118,6 +119,8 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
   children: ElementObject[] = []
 
   tag: string = 'div'
+
+  shape: string
 
   // box 属性
   background: string = ''
@@ -133,7 +136,7 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
   // 文本属性
   innerText: string = ''
   fontSize: number = 16
-  fontFamily: string = 'Arial'
+  fontFamily: string = 'Noto Sans SC'
   fontWeight: string = 'normal'
   fontStyle: string = 'normal'
   textDecoration: string = 'none'
@@ -150,19 +153,24 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
 
   constructor(serialize?: SerializeElementObject) {
     super()
+    this.shape = serialize?.shape || 'element'
     this.el = this.createElement(serialize?.tag || this.tag)
     if (serialize) {
       for (const [key, value] of Object.entries(serialize)) {
-        if (key === 'children') {
-          const children = value as SerializeElementObject[]
-          children.forEach((child) => {
-            const childObj = new ElementObject(child)
-            this.add(childObj)
-          })
-        } else if (key === 'tag') {
-          this.tag = value
-        } else {
-          this.set(key as ElementObjectKey, value, false)
+        switch (key) {
+          case 'children':
+            const children = value as SerializeElementObject[]
+            children.forEach((child) => {
+              const childObj = new ElementObject(child)
+              this.add(childObj)
+            })
+            break
+          case 'tag':
+            this.tag = value
+            break
+          default:
+            this.set(key as ElementObjectKey, value, false)
+            break
         }
       }
     }
@@ -377,6 +385,7 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
     let appliedSize = false
     let appliedTransform = false
     let appliedTransformOrigin = false
+    let appliedText = false
     for (const [key, value] of Object.entries(records)) {
       const k = key as K
       this[k] = value as V
@@ -403,6 +412,21 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
         case 'translateY':
           appliedTransform = true
           break
+        case 'innerText':
+        case 'fontSize':
+        case 'fontFamily':
+        case 'fontWeight':
+        case 'fontStyle':
+        case 'textDecoration':
+        case 'textAlign':
+        case 'color':
+        case 'lineHeight':
+        case 'letterSpacing':
+        case 'textShadow':
+        case 'writingMode':
+          appliedText = true
+          break
+
       }
     }
 
@@ -417,6 +441,9 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
     }
     if (appliedTransformOrigin) {
       this.applyTransformOrigin()
+    }
+    if (appliedText) {
+      this.applyText()
     }
   }
 

@@ -8,15 +8,13 @@ import { Text } from '@/packages/html-editor/shapes/text.ts'
 import { Image } from '@/packages/html-editor/shapes/image.ts'
 import { useControl } from '@/packages/html-editor/extentions/control.ts'
 import { useGuideline } from '@/packages/html-editor/extentions/guideline.ts'
+import { ElementObject } from '@/packages/html-editor/object.ts'
+import TextAttrBox from '@/components/TextAttrBox.vue'
 
 const editorEl = useTemplateRef('editorEl')
+const active = ref<ElementObject | undefined>(undefined)
 const isGrabbing = ref(false)
-const params = ref({
-  x: 0,
-  y: 0,
-  originX: 0,
-  originY: 0,
-})
+const drawer = ref(false)
 const workspace = ref<Workspace>()
 const rect = new Rect({
   width: 100,
@@ -45,10 +43,6 @@ rect.on('applying:transform', () => {
     rectRef.value.height = rect.height
 })
 
-const setPositionByOrigin = () => {
-  const {x, y, originX, originY} = params.value
-  rect.setPositionByOrigin(new DOMPoint(x, y), originX, originY)
-}
 onMounted(() => {
   if (!editorEl.value) {
     throw new Error('editorEl is not defined')
@@ -61,7 +55,7 @@ onMounted(() => {
   useGuideline(ws)
   const text = new Text({writingMode: 'vertical-rl'})
   const text2 = new Text({
-    innerText: '竖排文本, Hello World',
+    innerText: '黄河之水天上来, 奔流到海不复回',
     writingMode: 'vertical-rl',
     // angle: 20
   })
@@ -80,6 +74,16 @@ onMounted(() => {
       workspaceRef.value.translateY = ws.translateY
   })
 
+  ws.on('object:active', (e) => {
+    console.log('active', e)
+    active.value = e.target
+    if (e.target) {
+      drawer.value = true
+    } else {
+      drawer.value = false
+    }
+  })
+
   workspace.value = ws
 })
 </script>
@@ -91,7 +95,6 @@ onMounted(() => {
     @keydown.space="isGrabbing=!isGrabbing"
     tabindex="0"
   >
-
     <div class="tool-box" @click.stop="void 0">
       <div>
         <el-button
@@ -199,12 +202,26 @@ onMounted(() => {
 <!--      </div>-->
     </div>
   </div>
+  <el-drawer
+    v-model="drawer"
+    direction="btt"
+    :with-header="false"
+    size="60%"
+    :before-close="() => workspace?.setActive(undefined)"
+  >
+    <el-scrollbar class="p-4">
+      <template v-if="active">
+      <template v-if="active.shape === 'text'">
+        <TextAttrBox :active="active as Text"></TextAttrBox>
+      </template>
+    </template>
+    </el-scrollbar>
+  </el-drawer>
 </template>
 
 <style>
 </style>
 <style scoped>
-
 .editor-container{
   overflow: hidden;
   position: relative;

@@ -4,8 +4,9 @@ export class Image extends ElementObject {
   constructor(options: SerializeElementObject & {src: string, width: number, height: number}) {
     options = {
       objectFit: 'contain',
-      ...options,
       tag: 'img',
+      ...options,
+      shape: 'image',
     }
     super(options)
     this.el.className = 'img'

@@ -5,6 +5,7 @@ export class Rect extends ElementObject {
   constructor(options?: SerializeElementObject) {
     options = {
       tag: 'div',
+      shape: 'rect',
       width: 100,
       height: 100,
       background: 'transparent',
