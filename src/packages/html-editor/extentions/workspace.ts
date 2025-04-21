@@ -15,7 +15,7 @@ declare module '../object' {
 }
 
 export interface Options {
-  rulerSize: number
+  rulerSize?: number
 }
 
 export class Workspace extends ElementObject {
@@ -50,7 +50,7 @@ export class Workspace extends ElementObject {
     // useDraggable(editorEl, this, {
     //   isDetectionParentCollision: false, // 是否检测父元素碰撞
     // })
-    useControl(editorEl, this)
+    // useControl(editorEl, this)
     this.grab = new Grab(editorEl, this)
   }
 
@@ -75,9 +75,6 @@ export class Workspace extends ElementObject {
 
   add(obj: ElementObject): void {
     super.add(obj)
-    useDraggable(obj, {
-      isDetectionParentCollision: true, // 是否检测父元素碰撞
-    })
     this.listenClickEvent(obj)
   }
 
@@ -91,12 +88,16 @@ export class Workspace extends ElementObject {
         isMoving = false
         return
       }
+      e.stopPropagation()
       const activeElement: ElementObject | undefined = this.active === obj ? undefined : obj
       this.active = activeElement
       this.emit('object:active', {
         target: activeElement,
       })
     })
+    for (const child of obj.children) {
+      this.listenClickEvent(child)
+    }
   }
 
   setActive(obj: ElementObject | undefined) {

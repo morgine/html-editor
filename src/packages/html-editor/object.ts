@@ -91,6 +91,9 @@ export interface ImageAttributes {
 
 export interface BoxAttributes {
   background: string
+  backgroundColor: string
+  backgroundImage: string
+  backgroundSize: string
   boxShadow: string
   opacity: number
 }
@@ -124,6 +127,9 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
 
   // box 属性
   background: string = ''
+  backgroundColor: string = ''
+  backgroundImage: string = ''
+  backgroundSize: string = ''
   boxShadow: string = ''
   opacity: number = 1
 
@@ -184,6 +190,7 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
     el.style.display = 'inline-block' // 设置为行内块级元素
     el.style.touchAction = 'none' // 禁止触摸事件
     el.style.userSelect = 'none' // 禁止选中
+    el.style.whiteSpace = 'nowrap'  // 禁止文本换行
     el.style.overflow = 'hidden' // 禁止溢出
     return el
   }
@@ -353,12 +360,18 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
    */
   applyBox() {
     this.el.style.background = this.background
+    this.el.style.backgroundColor = this.backgroundColor
+    this.el.style.backgroundImage = this.backgroundImage
+    this.el.style.backgroundSize = this.backgroundSize
     this.el.style.boxShadow = this.boxShadow
     this.el.style.opacity = `${this.opacity}`
     this.emit('applying:box', {
       target: this,
       data: {
         background: this.background,
+        backgroundColor: this.backgroundColor,
+        backgroundImage: this.backgroundImage,
+        backgroundSize: this.backgroundSize,
         boxShadow: this.boxShadow,
         opacity: this.opacity,
       },
@@ -384,6 +397,7 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
     let appliedPosition = false
     let appliedSize = false
     let appliedTransform = false
+    let appliedBox = false
     let appliedTransformOrigin = false
     let appliedText = false
     for (const [key, value] of Object.entries(records)) {
@@ -426,6 +440,14 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
         case 'writingMode':
           appliedText = true
           break
+        case 'background':
+        case 'backgroundColor':
+        case 'backgroundImage':
+        case 'backgroundSize':
+        case 'boxShadow':
+        case 'opacity':
+          appliedBox = true
+          break
 
       }
     }
@@ -444,6 +466,9 @@ export class ElementObject extends Geometry<ElementEvents> implements ElementObj
     }
     if (appliedText) {
       this.applyText()
+    }
+    if (appliedBox) {
+      this.applyBox()
     }
   }
 

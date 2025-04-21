@@ -3,6 +3,25 @@ import { Text } from "@/packages/html-editor/shapes/text.ts"
 defineProps<{
   active: Text
 }>()
+
+const colors = [
+  {
+    value: '#ffa800',
+    label: '黄色',
+  },
+  {
+    value: '#0072ff',
+    label: '蓝色',
+  },
+  {
+    value: '#000000',
+    label: '黑色',
+  },
+  {
+    value: '#656565',
+    label: '灰色',
+  },
+]
 </script>
 
 <template>
@@ -19,14 +38,14 @@ defineProps<{
         autosize
         style="width: 100%;"
         :style="{
-                fontFamily: active.fontFamily,
-                fontWeight: active.fontWeight,
-                fontStyle: active.fontStyle,
-                lineHeight: active.lineHeight,
-                color: active.color,
-                letterSpacing: active.letterSpacing + 'px',
-                textAlign: active.textAlign,
-              }"
+          fontFamily: active.fontFamily,
+          fontWeight: active.fontWeight,
+          fontStyle: active.fontStyle,
+          lineHeight: active.lineHeight,
+          color: active.color,
+          letterSpacing: active.letterSpacing + 'px',
+          textAlign: active.textAlign,
+        }"
       />
     </el-form-item>
     <el-form-item label="书写模式">
@@ -42,6 +61,26 @@ defineProps<{
           label="竖排文本"
           value="vertical-rl"
         />
+      </el-select>
+    </el-form-item>
+    <el-form-item label="文字颜色">
+      <el-select
+        :model-value="active.color"
+        @update:model-value="active.set('color', $event)"
+      >
+        <el-option
+          v-for="item in colors"
+          :key="item.value"
+          :value="item.value"
+        >
+          <div class="flex items-center">
+            <el-tag :color="item.value" style="margin-right: 8px" size="small" />
+            <span :style="{ color: item.value }">{{ item.label }}</span>
+          </div>
+        </el-option>
+        <template #label>
+          <el-tag :color="active.color" />
+        </template>
       </el-select>
     </el-form-item>
     <el-form-item label="选择字体">
@@ -94,35 +133,30 @@ defineProps<{
         style="width: 100px"
       />
     </el-form-item>
-    <el-form-item label="对齐方式">
-      <el-button-group size="small">
-        <el-button
-          :type="active.textAlign==='left'?'primary':''"
-          @click="active.set('textAlign', 'left')"
-        >
-          左对齐
-        </el-button>
-        <el-button
-          :type="active.textAlign==='center'?'primary':''"
-          @click="active.set('textAlign', 'center')"
-        >
-          居中对齐
-        </el-button>
-        <el-button
-          :type="active.textAlign==='right'?'primary':''"
-          @click="active.set('textAlign', 'right')"
-        >
-          右对齐
-        </el-button>
-      </el-button-group>
-    </el-form-item>
+<!--    <el-form-item label="对齐方式">-->
+<!--      <el-radio-group-->
+<!--        :model-value="active.textAlign"-->
+<!--        @update:model-value="active.set('textAlign', $event)"-->
+<!--      >-->
+<!--        <el-radio-button-->
+<!--          value="left"-->
+<!--        >-->
+<!--          左对齐-->
+<!--        </el-radio-button>-->
+<!--        <el-radio-button-->
+<!--          value="center"-->
+<!--        >-->
+<!--          居中对齐-->
+<!--        </el-radio-button>-->
+<!--        <el-radio-button-->
+<!--          value="right"-->
+<!--        >-->
+<!--          右对齐-->
+<!--        </el-radio-button>-->
+<!--      </el-radio-group>-->
+<!--    </el-form-item>-->
     <el-form-item label="其他属性">
       <div class="flex items-center gap-2">
-        <el-color-picker
-          :model-value="active.color"
-          @update:model-value="active.set('color', $event)"
-          :show-alpha="true"
-        />
         <el-button-group size="small">
           <el-button
             :type="active.fontWeight==='bold'?'primary':''"
@@ -143,5 +177,11 @@ defineProps<{
 </template>
 
 <style scoped>
-
+.el-tag {
+  border: none;
+  aspect-ratio: 1;
+}
+:deep(.el-select__selected-item) {
+  display: flex;
+}
 </style>

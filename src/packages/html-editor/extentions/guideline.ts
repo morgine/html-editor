@@ -1,5 +1,5 @@
 import type { Coords } from '@/packages/html-editor/types'
-import type { Workspace } from '@/packages/html-editor/extentions/workspace'
+import type { ElementObject } from '@/packages/html-editor/object'
 
 const coordsKeys: (keyof Coords)[] = ['tl', 'tr', 'bl', 'br', 'cn']
 
@@ -10,7 +10,7 @@ export interface Options {
 }
 
 export class Guideline {
-  ws: Workspace
+  container: ElementObject
   yLines: { x1: number; y1: number; x2: number; y2: number }[] = []
   xLines: { x1: number; y1: number; x2: number; y2: number }[] = []
   verticalLine: HTMLElement
@@ -21,8 +21,8 @@ export class Guideline {
     snapDistance: 5,
   }
 
-  constructor(ws: Workspace, options?: Partial<Options>) {
-    this.ws = ws
+  constructor(container: ElementObject, options?: Partial<Options>) {
+    this.container = container
     this.options = {
       ...this.options,
       ...options,
@@ -30,25 +30,33 @@ export class Guideline {
 
     this.verticalLine = this.createGuidelineEl(true)
     this.horizontalLine = this.createGuidelineEl(false)
-    ws.el.parentElement!.appendChild(this.verticalLine)
-    ws.el.parentElement!.appendChild(this.horizontalLine)
+    const rootEl = this.getRootEl(container)
+    rootEl.appendChild(this.verticalLine)
+    rootEl.appendChild(this.horizontalLine)
 
     this.listenEvents()
   }
 
+  private getRootEl(obj: ElementObject): HTMLElement {
+    if (obj.parent) {
+      return this.getRootEl(obj.parent)
+    }
+    return obj.el.parentElement!
+  }
+
   private listenEvents() {
     const aCoordsItems: Coords[] = []
-    this.ws.on('object:moveStart', () => {
+    this.container.on('object:moveStart', ({target}) => {
       aCoordsItems.length = 0
-      // for (const child of this.ws.children) {
-      //   if (child !== node) {
-      //     const aCoords = child.calcACoords()
-      //     aCoordsItems.push(aCoords)
-      //   }
-      // }
-      aCoordsItems.push(this.ws.calcACoords())
+      for (const child of this.container.children) {
+        if (child !== target) {
+          const aCoords = child.calcACoords()
+          aCoordsItems.push(aCoords)
+        }
+      }
+      aCoordsItems.push(this.container.calcACoords())
     })
-    this.ws.on('object:moving', ({target: node}) => {
+    this.container.on('object:moving', ({target: node}) => {
       this.clearGuidelines()
       const aCoords = node.calcACoords()
 
@@ -82,7 +90,7 @@ export class Guideline {
         this.hideHorizontalLine()
       }
     })
-    this.ws.on('object:moveEnd', () => {
+    this.container.on('object:moveEnd', () => {
       this.hideVerticalLine()
       this.hideHorizontalLine()
     })
@@ -222,6 +230,6 @@ export class Guideline {
   }
 }
 
-export function useGuideline(ws: Workspace) {
-  return new Guideline(ws)
+export function useGuideline(container: ElementObject, options?: Partial<Options>) {
+  return new Guideline(container, options)
 }

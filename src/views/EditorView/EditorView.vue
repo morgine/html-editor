@@ -6,68 +6,62 @@ import { useZoom } from '@/packages/html-editor/extentions/zoom.ts'
 import { Rect } from '@/packages/html-editor/shapes/rect.ts'
 import { Text } from '@/packages/html-editor/shapes/text.ts'
 import { Image } from '@/packages/html-editor/shapes/image.ts'
-import { useControl } from '@/packages/html-editor/extentions/control.ts'
 import { useGuideline } from '@/packages/html-editor/extentions/guideline.ts'
 import { ElementObject } from '@/packages/html-editor/object.ts'
-import TextAttrBox from '@/components/TextAttrBox.vue'
+import TextAttrBox from '@/views/EditorView/components/TextAttrBox.vue'
+import { BookCover } from '@/packages/html-editor/shapes/book-cover.ts'
+import BackgroundBox from '@/views/EditorView/components/BackgroundBox.vue'
 
 const editorEl = useTemplateRef('editorEl')
 const active = ref<ElementObject | undefined>(undefined)
 const isGrabbing = ref(false)
 const drawer = ref(false)
 const workspace = ref<Workspace>()
-const rect = new Rect({
-  width: 100,
-  height: 100,
-  x: 100,
-  y: 100,
-  rotate: 10,
-})
-
-const rectRef = ref({
-  x: rect.x,
-  y: rect.y,
-  width: rect.width,
-  height: rect.height,
-})
+const bookCover = new BookCover()
 
 const workspaceRef = ref({
   translateX: 0,
   translateY: 0,
 })
 
-rect.on('applying:transform', () => {
-    rectRef.value.x = rect.x
-    rectRef.value.y = rect.y
-    rectRef.value.width = rect.width
-    rectRef.value.height = rect.height
-})
-
 onMounted(() => {
   if (!editorEl.value) {
     throw new Error('editorEl is not defined')
   }
-  const ws = new Workspace(editorEl.value)
-  // rect.updateTransformStyle()
-  useControl(editorEl.value, rect)
-  // useControl(ws.el, rect, {position: 'relative'})
-  useZoom(rect.el, rect)
-  useGuideline(ws)
-  const text = new Text({writingMode: 'vertical-rl'})
+  const ws = new Workspace(editorEl.value, {
+    width: bookCover.width,
+    height: bookCover.height,
+  })
+  // useGuideline(ws)
+  const title = new Text({
+    writingMode: 'horizontal-tb',
+    fontWeight: 'bold',
+    fontSize: 20,
+    innerText: `《春暮》`
+  })
+  const text1 = new Text({
+    writingMode: 'horizontal-tb',
+    innerText: `春江烟柳绿参差，戏水新雏碎玉池。
+莫怨东风逐香冷，梨花一夜满青枝。`
+  })
   const text2 = new Text({
-    innerText: '黄河之水天上来, 奔流到海不复回',
+    innerText: '黄河之水天上来',
     writingMode: 'vertical-rl',
-    // angle: 20
+    fontSize: 12,
+    fontWeight: 'light',
   })
   // const img = new Image({
   //   src: 'https://lingfeng-temu3.oss-cn-beijing.aliyuncs.com/resources/DzUhiblq9FMKdLUfps0Md8pmnziFKZOxs7uHyN9zTOJapCWMn1t0kvg0sr0OqubAUs0CnAMn7dQ8ZffZiy8QBgOHr40zY5PVIgfr',
   //   width: 100,
   //   height: 100,
   // })
-  ws.add(rect)
-  ws.add(text)
-  ws.add(text2)
-  // workspace.value.add(img)
+  bookCover.workspace.add(title)
+  bookCover.workspace.add(text1)
+  bookCover.workspace.add(text2)
+  ws.add(bookCover)
+  useGuideline(bookCover.workspace, {
+    lineColor: '#ff7272',
+  })
 
   ws.on('applying:transform', () => {
       workspaceRef.value.translateX = ws.translateX
@@ -211,10 +205,13 @@ onMounted(() => {
   >
     <el-scrollbar class="p-4">
       <template v-if="active">
-      <template v-if="active.shape === 'text'">
-        <TextAttrBox :active="active as Text"></TextAttrBox>
+        <template v-if="active.shape === 'text'">
+          <TextAttrBox :active="active as Text"></TextAttrBox>
+        </template>
+        <template v-else>
+          <BackgroundBox :obj="bookCover"></BackgroundBox>
+        </template>
       </template>
-    </template>
     </el-scrollbar>
   </el-drawer>
 </template>

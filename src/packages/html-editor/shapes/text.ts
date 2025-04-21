@@ -1,5 +1,4 @@
 import { ElementObject, type SerializeElementObject } from '@/packages/html-editor/object.ts'
-import { useEditable } from '@/packages/html-editor/extentions/editable.ts'
 
 export class Text extends ElementObject {
   constructor(options?: SerializeElementObject) {
@@ -8,7 +7,7 @@ export class Text extends ElementObject {
       shape: 'text',
       innerText: 'Text',
       fontSize: 16,
-      color: '#000',
+      color: '#000000',
       fontFamily: 'Noto Sans SC',
       x: 0,
       y: 0,
@@ -25,10 +24,18 @@ export class Text extends ElementObject {
       this.calcWidthHeight()
     })
     resizeObserver.observe(this.el)
+
+    this.listenEvent()
   }
 
   calcWidthHeight() {
     this.width = this.el.offsetWidth
     this.height = this.el.offsetHeight
+  }
+
+  private listenEvent() {
+    this.on('applying:text', () => {
+      this.calcWidthHeight()
+    })
   }
 }
