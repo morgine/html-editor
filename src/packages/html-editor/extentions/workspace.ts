@@ -44,9 +44,9 @@ export class Workspace extends ElementObject {
     useZoom(editorEl, this, {
       listenWheel: true,
     })
-    useRuler(editorEl, this, {
-      size: rulerSize,
-    })
+    // useRuler(editorEl, this, {
+    //   size: rulerSize,
+    // })
     // useDraggable(editorEl, this, {
     //   isDetectionParentCollision: false, // 是否检测父元素碰撞
     // })

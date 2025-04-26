@@ -1,5 +1,6 @@
 import { ElementObject, type SerializeElementObject } from '@/packages/html-editor/object.ts'
 import { useDraggable } from '@/packages/html-editor/extentions/draggable.ts'
+import { useControl } from '@/packages/html-editor/extentions/control.ts'
 
 // export type CoverType = 'font' | 'font-spine' | 'all'
 

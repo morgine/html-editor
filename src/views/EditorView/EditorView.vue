@@ -11,6 +11,7 @@ import { ElementObject } from '@/packages/html-editor/object.ts'
 import TextAttrBox from '@/views/EditorView/components/TextAttrBox.vue'
 import { BookCover } from '@/packages/html-editor/shapes/book-cover.ts'
 import BackgroundBox from '@/views/EditorView/components/BackgroundBox.vue'
+import { Control, useControl } from '@/packages/html-editor/extentions/control.ts'
 
 const editorEl = useTemplateRef('editorEl')
 const active = ref<ElementObject | undefined>(undefined)
@@ -68,10 +69,17 @@ onMounted(() => {
       workspaceRef.value.translateY = ws.translateY
   })
 
+  let activeControl: Control | undefined = undefined
   ws.on('object:active', (e) => {
     console.log('active', e)
     active.value = e.target
     if (e.target) {
+      if (activeControl) {
+        activeControl.remove()
+      }
+      if (e.target.shape === 'text') {
+        activeControl = useControl(editorEl.value!, e.target)
+      }
       drawer.value = true
     } else {
       drawer.value = false

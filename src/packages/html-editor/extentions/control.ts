@@ -1,4 +1,5 @@
 import { ElementObject } from '@/packages/html-editor/object'
+import type { EventOrigin } from '@/packages/html-editor/mitter.ts'
 
 export interface Options {
   width: number
@@ -21,6 +22,11 @@ export class Control {
   private r: SVGLineElement
   private b: SVGLineElement
   private l: SVGLineElement
+  // 四个圆形按钮
+  private tlCircle: SVGCircleElement
+  private trCircle: SVGCircleElement
+  private brCircle: SVGCircleElement
+  private blCircle: SVGCircleElement
   private readonly obj: ElementObject
   private resizeObserver: ResizeObserver
 
@@ -37,6 +43,22 @@ export class Control {
     this.b = this.createLine()
     this.l = this.createLine()
 
+    this.tlCircle = this.createCircle()
+    this.trCircle = this.createCircle()
+    this.brCircle = this.createCircle()
+    this.blCircle = this.createCircle()
+
+    this.svg.append(
+      this.t,
+      this.r,
+      this.b,
+      this.l,
+      this.tlCircle,
+      this.trCircle,
+      this.brCircle,
+      this.blCircle
+    )
+
     // 添加尺寸监听
     this.resizeObserver = new ResizeObserver(() => this.updateSvgSize(root))
     this.resizeObserver.observe(root)
@@ -44,6 +66,13 @@ export class Control {
     this.obj = obj
     this.setupEventListeners()
     this.updateControl()
+  }
+
+  remove() {
+    this.resizeObserver.disconnect()
+    this.svg.remove()
+    this.obj.off('applying:transform', this.updateTransform)
+    this.obj.off('applying:position', this.updatePosition)
   }
 
   private createSvgElement(): SVGSVGElement {
@@ -55,13 +84,22 @@ export class Control {
     return svg
   }
 
+  private createCircle(): SVGCircleElement {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    circle.setAttribute('r', '6') // 设置半径
+    circle.setAttribute('fill', '#fff') // 填充白色
+    circle.setAttribute('stroke', this.options.color) // 边框使用主题色
+    circle.setAttribute('stroke-width', '2') // 边框宽度
+    circle.style.pointerEvents = 'auto' // 允许交互事件
+    return circle
+  }
+
   private createLine(): SVGLineElement {
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
     line.setAttribute('stroke', this.options.color)
     line.setAttribute('stroke-width', this.options.width.toString())
     line.setAttribute('stroke-dasharray', this.getDashStyle())
     line.style.pointerEvents = 'visibleStroke' // 仅线条响应事件
-    this.svg.appendChild(line)
     return line
   }
 
@@ -84,15 +122,19 @@ export class Control {
 
   private setupEventListeners() {
 
-    this.obj.on('applying:transform', (event, origin) => {
-      if (origin === 'children') return
-      this.updateControl()
-    })
+    this.obj.on('applying:transform', this.updateTransform)
 
-    this.obj.on('applying:position', (event, origin) => {
-      if (origin !== 'self') return
-      this.updateControl()
-    })
+    this.obj.on('applying:position', this.updatePosition)
+  }
+
+  private updateTransform = (event: unknown, origin: EventOrigin) => {
+    if (origin === 'children') return
+    this.updateControl()
+  }
+
+  private updatePosition = (event: unknown, origin: EventOrigin) => {
+    if (origin !== 'self') return
+    this.updateControl()
   }
 
   private updateControl() {
@@ -118,6 +160,15 @@ export class Control {
     this.l.setAttribute('y1', c.tl.y.toString())
     this.l.setAttribute('x2', c.bl.x.toString())
     this.l.setAttribute('y2', c.bl.y.toString())
+
+    this.tlCircle.setAttribute('cx', c.tl.x.toString())
+    this.tlCircle.setAttribute('cy', c.tl.y.toString())
+    this.trCircle.setAttribute('cx', c.tr.x.toString())
+    this.trCircle.setAttribute('cy', c.tr.y.toString())
+    this.brCircle.setAttribute('cx', c.br.x.toString())
+    this.brCircle.setAttribute('cy', c.br.y.toString())
+    this.blCircle.setAttribute('cx', c.bl.x.toString())
+    this.blCircle.setAttribute('cy', c.bl.y.toString())
   }
 }
 
